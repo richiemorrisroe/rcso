@@ -1,12 +1,12 @@
-* Examing Ireland Housing
+* Examine Ireland Housing
 ** Data From The CSO 
 ** Currently the latest census is 2011
-** 2016 will become avalible some time in the future
-* Morgage
-** Affordibilyt
-** Centreal banks rules
+** 2016 will become available some time in the future
+* Mortgage
+** Affordable
+** Central banks rules
 * Renting
 ** supply
 *** students
 ** Dublin
-** Affordiblity
+** Affordablity

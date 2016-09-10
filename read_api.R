@@ -18,6 +18,7 @@ getJSONstat <-function (ds = "CD504"){
     url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
     ## read the dataset from the cso website
     raw_txt  <- getURLContent(url_cso)
+    raw_txt <- my_str
     ## converts the dataset into a json and a rjstat data.frame
     raw_json <- fromJSON(raw_txt)
     raw_json_stat <- fromJSONstat(raw_txt, use_factors=FALSE)
@@ -46,11 +47,19 @@ getJSONstat <-function (ds = "CD504"){
             ## do nothing
         }else
         {
-            cat(raw_names[i], "\n")
+
             raw_df[[raw_names[i]]] <- as.factor(raw_df[[raw_names[i]]])
         }
         }
     return(raw_df)
+}
+
+## I fould my self copying code for the third time
+## today so make it a function
+
+clean_names <- function(bad_names){
+    good_names <- gsub('\\s', '_', tolower(bad_names))
+    return(good_names)
 }
 
 people_per_house <- getJSONstat()
@@ -101,3 +110,34 @@ people_per_house %>%
     scale_y_continuous(labels = comma) +
     ggtitle("Number of Persons Per Household, Ireland (Census 2011)") +
     ylab("Number of Households") + xlab("Number of Persons per Household")
+## just for fun we are going to find the top ten
+## towns where we might find the love of our lifes
+
+singles <- getJSONstat("CD521")
+## we can filter on age sex and material status
+## we'll keep both sexs to get 
+for_me <- singles %>% filter(age_group == "25 - 44 years",
+                             detailed_marital_status %in%
+                             c("Single", "Widowed",
+                               "Separated (including deserted)",
+                               "Divorced"))
+
+## what happens if we sum values with NA's
+## don't even want to know
+## make all NA'S 0
+for_me$value <- ifelse(is.na(for_me$value), 0, for_me$value)
+## get rid of all the featurs we are
+## not intrested by summing them
+slim_set <- for_me %>%
+    group_by(sex, towns_by_size) %>%
+    summarise(value = sum(value))
+
+## make the data set wide so we can calculate
+## the % Female and Male
+wide_sex <- slim_set %>%
+    dcast(towns_by_size~sex, value.var="value")
+
+names(wide_sex) <- clean_names(names(wide_sex))
+wide_sex <- wide_sex %>%
+    mutate(per_male = male/both_sexes,
+           per_female = female/both_sexes)
