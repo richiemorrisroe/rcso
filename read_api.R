@@ -1,0 +1,103 @@
+require(dplyr)
+require(reshape2)
+require(ggplot2)
+require(lubridate)
+require(jsonlite)
+require(rjstat)
+require(RCurl)
+require(scales)
+require(stringr)
+
+## function to take the name of a dataset from Irelands CSO
+## and return a data frame with correct dates, labels, values
+## and good names for the fields
+getJSONstat <-function (ds = "CD504"){
+    ## return a data frame containing the json object from
+    ## the usrl supplied
+    ## this is designed to work with Irelands CSO web API
+    url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
+    ## read the dataset from the cso website
+    raw_txt  <- getURLContent(url_cso)
+    ## converts the dataset into a json and a rjstat data.frame
+    raw_json <- fromJSON(raw_txt)
+    raw_json_stat <- fromJSONstat(raw_txt, use_factors=FALSE)
+    ## clean up the names
+    ## get the proper names from the json
+    ds_raw_names <- raw_json$dataset$dimension$id
+    ## make the lower case
+    ds_raw_names <- tolower(ds_raw_names)
+    ## add a name for the value field
+    ds_raw_names[[length(ds_raw_names)+1]] <- "value"
+    ## convert the list into a data.frame
+    raw_df <- as.data.frame(raw_json_stat)
+    ## update the names and replace spaces with underscores
+    raw_names    <- gsub('\\s', '_', ds_raw_names)
+    names(raw_df) <- raw_names
+    
+    ## make the time field a Date object
+    ## find the name of the time role
+    time_role <- gsub('\\s', '_', tolower(raw_json$dataset$dimension$role$time))
+    raw_df[[time_role]] <- ymd(paste0(raw_df[[time_role]], "0101"))
+    ## make all the fields besides value and the time_role factors
+    for(i in 1:length(raw_names)){
+
+        if(raw_names[i] %in% c(time_role,"value"))
+        {
+            ## do nothing
+        }else
+        {
+            cat(raw_names[i], "\n")
+            raw_df[[raw_names[i]]] <- as.factor(raw_df[[raw_names[i]]])
+        }
+        }
+    return(raw_df)
+}
+
+people_per_house <- getJSONstat()
+## extract the number of persons per house from
+## the label
+num_per_house <-
+    str_extract(as.character(people_per_house$persons_per_household),
+                '[0-9]+')
+## num_per_house <-
+##     substr(as.character(people_per_house$persons_per_household),
+##        regexpr('[0-9]+', as.character(people_per_house$persons_per_household)),
+##        regexpr('[0-9]+', as.character(people_per_house$persons_per_household)) +
+##        attr(regexpr('[0-9]+', as.character(people_per_house$persons_per_household)),'match.length')-1)
+## converts it to a integer for ordering
+people_per_house <- people_per_house %>% mutate(person_per_house = as.integer(num_per_house))
+
+## order the factors so they appear in the legend in a sinsibal order
+people_per_house$persons_per_household <-
+    factor(people_per_house$persons_per_household,
+           levels=c(
+               "Persons - 1 person household"         
+             , "Persons - 2 person household"         
+             , "Persons - 3 person household"         
+             , "Persons - 4 person household"         
+             , "Persons - 5  person household"        
+             , "Persons - 6 person household"         
+             , "Persons - 7 person household"         
+             , "Persons - 8 person household"         
+             , "Persons - 9 person household"         
+             , "Persons - 10 person household"        
+             , "Persons - 11 person household"        
+             , "Persons - 12 or more person household"
+             , "All persons in private households"    
+             , "All private households"))
+
+
+
+people_per_house %>%
+    arrange(person_per_house) %>%
+    filter(persons_per_household !=
+           "All persons in private households" ,
+           persons_per_household !=
+           "All private households") %>%               
+    ggplot(aes(x=as.factor(person_per_house),
+               y=value,
+               fill =persons_per_household ))+
+    geom_bar(stat="identity", position="dodge") +
+    scale_y_continuous(labels = comma) +
+    ggtitle("Number of Persons Per Household, Ireland (Census 2011)") +
+    ylab("Number of Households") + xlab("Number of Persons per Household")
