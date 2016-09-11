@@ -18,7 +18,7 @@ getJSONstat <-function (ds = "CD504"){
     url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
     ## read the dataset from the cso website
     raw_txt  <- getURLContent(url_cso)
-    raw_txt <- my_str
+
     ## converts the dataset into a json and a rjstat data.frame
     raw_json <- fromJSON(raw_txt)
     raw_json_stat <- fromJSONstat(raw_txt, use_factors=FALSE)
