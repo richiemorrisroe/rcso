@@ -16,6 +16,7 @@ getJSONstat <-function (ds = "CD504"){
     ## the usrl supplied
     ## this is designed to work with Irelands CSO web API
     url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
+    
     ## read the dataset from the cso website
     raw_txt  <- getURLContent(url_cso)
 
@@ -38,7 +39,9 @@ getJSONstat <-function (ds = "CD504"){
     ## make the time field a Date object
     ## find the name of the time role
     time_role <- gsub('\\s', '_', tolower(raw_json$dataset$dimension$role$time))
-    raw_df[[time_role]] <- ymd(paste0(raw_df[[time_role]], "0101"))
+    ## for months need to make this work for all values year census year, quater, month week? half
+    raw_df[[time_role]] <- ymd(paste0(gsub('[^0-9]*', '', raw_df[[time_role]]), "01"))
+     ##   raw_df[[time_role]] <- ymd(paste0(raw_df[[time_role]], "0101"))
     ## make all the fields besides value and the time_role factors
     for(i in 1:length(raw_names)){
 
@@ -141,3 +144,4 @@ names(wide_sex) <- clean_names(names(wide_sex))
 wide_sex <- wide_sex %>%
     mutate(per_male = male/both_sexes,
            per_female = female/both_sexes)
+tester <- getJSONstat("HPM06")
