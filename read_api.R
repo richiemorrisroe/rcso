@@ -57,6 +57,46 @@ getJSONstat <-function (ds = "CD504"){
     return(raw_df)
 }
 
+cso_time <- function(time_str){
+    ## take a vector with time strings that Irelands cso.ie uses
+    ## return a lubridate object
+    ## starts and ends with 4 numbers and contains only numbers
+    ## so 2015, 2010 
+    if(grepl('^[0-9]{4}$', time_str)){
+        ## year
+        return(ymd(paste0(time_str, "0101")))
+        ## month
+        ## starts with 4 numbers then an 'M' ends with 2 numbers
+        ## so 2014M03 3054M67
+    } else if (grepl('^[0-9]{4}M[0-9]{2}$', time_str)){
+        return(ymd(paste0(gsub('[^0-9]*', '', time_str), "01")))
+
+        ## Quaters
+        ## starts with 4 numbers then a 'Q' and ending with 1 number
+    } else if (grepl('^[0-9]{4}Q[0-9]$', time_str)){
+        ## extract the quater number which is the number the string ends with
+        qtr <- str_extract(time_str, '[0-9]$')
+        if(qtr == "1"){ # first quater YYYY0101            
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0101")))
+        }else if(qtr == "2"){ # second quater YYYY0401
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0401")))
+        }else if(qtr == "3"){ # third quater YYYY0701
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0701")))
+        }else if(qtr == "4"){ # forth quater YYYY1001
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "1001")))
+        }
+        
+    } else if(grepl('^[0-9]{4}H[12]$', time_str)){
+        half <- str_extract(time_str, '[12]$')
+        if(half == "1"){
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0101")))
+        } else if(half == "2"){
+            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0601")))
+        }
+    }
+    cat("Error ", time_string, " dose not match a date in the format\n2015, 2015M01, 2015Q1, 2015H1\n")
+}
+
 ## I fould my self copying code for the third time
 ## today so make it a function
 
