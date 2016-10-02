@@ -13,11 +13,12 @@ require(stringr)
 ## and good names for the fields
 getJSONstat <-function (ds = "CD504"){
     ## return a data frame containing the json object from
-    ## the usrl supplied
+    ## dataset name supplied
     ## this is designed to work with Irelands CSO web API
     url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
     
     ## read the dataset from the cso website
+    ## as a raw JSON file
     raw_txt  <- getURLContent(url_cso)
 
     ## converts the dataset into a json and a rjstat data.frame
@@ -40,8 +41,9 @@ getJSONstat <-function (ds = "CD504"){
     ## find the name of the time role
     time_role <- gsub('\\s', '_', tolower(raw_json$dataset$dimension$role$time))
     ## for months need to make this work for all values year census year, quater, month week? half
-    raw_df[[time_role]] <- ymd(paste0(gsub('[^0-9]*', '', raw_df[[time_role]]), "01"))
-     ##   raw_df[[time_role]] <- ymd(paste0(raw_df[[time_role]], "0101"))
+    raw_df[[time_role]] <- sapply(raw_df[[time_role]], cso_time)
+    raw_df[[time_role]]  <- ymd(raw_df[[time_role]])
+
     ## make all the fields besides value and the time_role factors
     for(i in 1:length(raw_names)){
 
@@ -64,12 +66,12 @@ cso_time <- function(time_str){
     ## so 2015, 2010 
     if(grepl('^[0-9]{4}$', time_str)){
         ## year
-        return(ymd(paste0(time_str, "0101")))
+        return(paste0(time_str, "0101"))
         ## month
         ## starts with 4 numbers then an 'M' ends with 2 numbers
         ## so 2014M03 3054M67
     } else if (grepl('^[0-9]{4}M[0-9]{2}$', time_str)){
-        return(ymd(paste0(gsub('[^0-9]*', '', time_str), "01")))
+        return(paste0(gsub('[^0-9]*', '', time_str), "01"))
 
         ## Quaters
         ## starts with 4 numbers then a 'Q' and ending with 1 number
@@ -77,21 +79,21 @@ cso_time <- function(time_str){
         ## extract the quater number which is the number the string ends with
         qtr <- str_extract(time_str, '[0-9]$')
         if(qtr == "1"){ # first quater YYYY0101            
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0101")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "0101"))
         }else if(qtr == "2"){ # second quater YYYY0401
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0401")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "0401"))
         }else if(qtr == "3"){ # third quater YYYY0701
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0701")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "0701"))
         }else if(qtr == "4"){ # forth quater YYYY1001
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "1001")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "1001"))
         }
         
     } else if(grepl('^[0-9]{4}H[12]$', time_str)){
         half <- str_extract(time_str, '[12]$')
         if(half == "1"){
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0101")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "0101"))
         } else if(half == "2"){
-            return(ymd(paste0(str_extract(time_str, '^[0-9]{4}'), "0601")))
+            return(paste0(str_extract(time_str, '^[0-9]{4}'), "0601"))
         }
     }
     cat("Error ", time_string, " dose not match a date in the format\n2015, 2015M01, 2015Q1, 2015H1\n")
@@ -104,18 +106,16 @@ clean_names <- function(bad_names){
     good_names <- gsub('\\s', '_', tolower(bad_names))
     return(good_names)
 }
+## Example 1
+## Examin the number of persons peh household from the Cessus 2011
 
-people_per_house <- getJSONstat()
+## pass the dataset name to get a data.frame with the data
+people_per_house <- getJSONstat("CD504")
 ## extract the number of persons per house from
 ## the label
 num_per_house <-
     str_extract(as.character(people_per_house$persons_per_household),
                 '[0-9]+')
-## num_per_house <-
-##     substr(as.character(people_per_house$persons_per_household),
-##        regexpr('[0-9]+', as.character(people_per_house$persons_per_household)),
-##        regexpr('[0-9]+', as.character(people_per_house$persons_per_household)) +
-##        attr(regexpr('[0-9]+', as.character(people_per_house$persons_per_household)),'match.length')-1)
 ## converts it to a integer for ordering
 people_per_house <- people_per_house %>% mutate(person_per_house = as.integer(num_per_house))
 
