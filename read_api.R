@@ -8,6 +8,7 @@ require(RCurl)
 require(scales)
 require(stringr)
 
+
 ## function to take the name of a dataset from Irelands CSO
 ## and return a data frame with correct dates, labels, values
 ## and good names for the fields
@@ -156,6 +157,7 @@ people_per_house %>%
 ## just for fun we are going to find the top ten
 ## towns where we might find the love of our lifes
 
+## Example 2
 singles <- getJSONstat("CD521")
 ## we can filter on age sex and material status
 ## we'll keep both sexs to get 
