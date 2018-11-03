@@ -16,7 +16,7 @@ getJSONstat <-function (ds = "CD504"){
     ## return a data frame containing the json object from
     ## dataset name supplied
     ## this is designed to work with Irelands CSO web API
-    url_cso <- paste0("http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
+    url_cso <- paste0("https://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
     
     ## read the dataset from the cso website
     ## as a raw JSON file
