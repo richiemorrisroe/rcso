@@ -17,7 +17,7 @@ getJSONstat <-function (ds = "CD504", id=FALSE){
     ## dataset name supplied
     ## this is designed to work with Irelands CSO web API
 
-    url_cso <- paste0("https://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
+    url_cso <- paste0("https://statbank.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
     if(id) {
         type="id"
 
