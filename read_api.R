@@ -12,19 +12,26 @@ require(stringr)
 ## function to take the name of a dataset from Irelands CSO
 ## and return a data frame with correct dates, labels, values
 ## and good names for the fields
-getJSONstat <-function (ds = "CD504"){
+getJSONstat <-function (ds = "CD504", id=FALSE){
     ## return a data frame containing the json object from
     ## dataset name supplied
     ## this is designed to work with Irelands CSO web API
+
     url_cso <- paste0("https://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/", ds)
-    
+    if(id) {
+        type="id"
+
+    }
+    else {
+        type="label"
+    }
     ## read the dataset from the cso website
     ## as a raw JSON file
     raw_txt  <- getURLContent(url_cso)
 
     ## converts the dataset into a json and a rjstat data.frame
     raw_json <- fromJSON(raw_txt)
-    raw_json_stat <- fromJSONstat(raw_txt, use_factors=FALSE)
+    raw_json_stat <- fromJSONstat(raw_txt, use_factors=FALSE, naming=type)
     ## clean up the names
     ## get the proper names from the json
     ds_raw_names <- raw_json$dataset$dimension$id
